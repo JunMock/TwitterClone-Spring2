@@ -27,7 +27,7 @@ import java.util.Set;
 @RequestMapping("files")
 public class FileUploadController {
 
-    public static final Logger log= LoggerFactory.getLogger(FileUploadController.class);
+    public static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
 
     private final UserService userService;
     private final StorageService storageService;
@@ -40,60 +40,60 @@ public class FileUploadController {
 
     @GetMapping("/icon/{filename:.+}")
     @ResponseBody
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename){
-        Resource file=storageService.loadAsResource(filename);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+file.getFilename()+"\"")
+    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+        Resource file = storageService.loadAsResource(filename);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
                 .body(file);
     }
 
     @PostMapping("/icon/upload")
     public String handleFileUpload(Principal principal, @RequestParam("icon") MultipartFile file,
-                                   RedirectAttributes redirectAttributes){
+                                   RedirectAttributes redirectAttributes) {
 
-        String[] res=file.getOriginalFilename().split("\\.");
-        String suffix=res[res.length-1];
-        if(!isImageExtension(suffix)){
-            Set<String> errors=new HashSet<>();
+        String[] res = file.getOriginalFilename().split("\\.");
+        String suffix = res[res.length - 1];
+        if (!isImageExtension(suffix)) {
+            Set<String> errors = new HashSet<>();
             errors.add("only image files can be uploaded.");
-            redirectAttributes.addFlashAttribute("errors",errors);
+            redirectAttributes.addFlashAttribute("errors", errors);
             return "redirect:/update";
         }
 
-        String filename=storageService.store(file);
+        String filename = storageService.store(file);
 
         User user = TwitterCloneUtil.getLoginuserFromPrincipal(principal);
-        Path path=storageService.load(filename);
+        Path path = storageService.load(filename);
 
-        log.info("path.filename.tostring: "+path.getFileName().toString());
-        user.setIconPath( getPathStrFromFilename(path.getFileName().toString()) );
+        log.info("path.filename.tostring: " + path.getFileName().toString());
+        user.setIconPath(getPathStrFromFilename(path.getFileName().toString()));
 
-        try{
+        try {
             userService.update(user);
-        }catch (UserIdNotFoundException e){
-            Set<String> errors=new HashSet<>();
+        } catch (UserIdNotFoundException e) {
+            Set<String> errors = new HashSet<>();
             errors.add(e.getMessage());
-            redirectAttributes.addFlashAttribute("errors",errors);
+            redirectAttributes.addFlashAttribute("errors", errors);
             return "redirect:/update";
-        }catch (Exception e){
-            Set<String> errors=new HashSet<>();
+        } catch (Exception e) {
+            Set<String> errors = new HashSet<>();
             errors.add("unexpected error occured. try again.");
             log.info(e.getMessage());
-            redirectAttributes.addFlashAttribute("errors",errors);
+            redirectAttributes.addFlashAttribute("errors", errors);
             return "redirect:/update";
         }
 
-        TwitterCloneUtil.updateAuthenticate(principal,user);
+        TwitterCloneUtil.updateAuthenticate(principal, user);
 
         return "redirect:/";
     }
 
-    public String getPathStrFromFilename(String filename){
-        return MvcUriComponentsBuilder.fromMethodName(FileUploadController.class,"serveFile",filename).build().toString();
+    public String getPathStrFromFilename(String filename) {
+        return MvcUriComponentsBuilder.fromMethodName(FileUploadController.class, "serveFile", filename).build().toString();
     }
 
-    public boolean isImageExtension(String extension){
-        for (String s:TwitterCloneUtil.imageExtensions){
-            if(s.equals(extension)){
+    public boolean isImageExtension(String extension) {
+        for (String s : TwitterCloneUtil.imageExtensions) {
+            if (s.equals(extension)) {
                 return true;
             }
         }
@@ -101,7 +101,7 @@ public class FileUploadController {
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)
-    public ResponseEntity handleStorageFileNotFound(StorageFileNotFoundException exc){
+    public ResponseEntity handleStorageFileNotFound(StorageFileNotFoundException exc) {
         return ResponseEntity.notFound().build();
     }
 

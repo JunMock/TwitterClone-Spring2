@@ -1,7 +1,8 @@
 .top-buffer {
     margin-top: 20px
 }
-.vcenter{
+
+.vcenter {
     display: inline-block;
     vertical-align: middle;
     float: none;
